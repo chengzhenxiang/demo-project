@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: demo-project
+  kafka:
+    kafka:
+      bootstrap-servers: localhost:9092
+      properties:
+        spring.json.use.type.headers: true
+        security.protocol: PLAINTEXT
+    consumer:
+      group-id: test
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.cloudevents.kafka.CloudEventDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.cloudevents.kafka.CloudEventSerializer
+    streams:
+      cache-max-size-buffering: 512MB
+      properties:
+        spring.json.use.type.headers: false
+
+spring.cloud:
+  stream:
+    bindings:
+      process-in-0.destination: topic-test
+
+  function:
+    definition: process;
+
+spring.cloud.stream.kafka.streams.binder:
+  deserializationExceptionHandler: sendToDlq
+  configuration:
+    commit.interval.ms: 1000
+    spring.json.use.type.headers: false
+  functions:
+    process:
+      applicationId: cloud-event-process
